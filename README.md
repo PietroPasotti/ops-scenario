@@ -273,6 +273,62 @@ def test_pebble_exec():
 ```
 
 
+# TOX
+
+Template scenario tests with tox:
+
+```
+[testenv:scenario]
+description = Scenario tests
+deps =
+    pytest
+    ops-scenario
+    -r{toxinidir}/requirements.txt
+commands =
+    pytest -v --tb native {toxinidir}/tests/scenario --log-cli-level=INFO -s {posargs}
+
+```
+
+
+# UTILS
+## capture_events
+
+`scenario.utils.capture_events` is a context manager for checking which events have been fired on your charm during a trigger.
+
+In the simple case in which the charm doesn't emit any custom events (and there are no deferred events in the queue), only the 'toplevel' event being emitted by the Framework will be captured.
+
+```python
+from ops.charm import StartEvent
+from scenario import State
+from scenario.utils import capture_events
+from charm import MyCharm
+
+with capture_events() as captured:
+    State().trigger('start', MyCharm)
+    
+assert len(captured) == 1
+assert isinstance(captured[0], StartEvent)
+```
+
+If your charm's `_on_start`, however, emits some custom events:
+
+```python
+from ops.charm import StartEvent
+from scenario import State
+from scenario.utils import capture_events
+from charm import MyCharm, MyCustomEvent1, MyCustomEvent2
+
+with capture_events() as captured:
+    State().trigger('start', MyCharm)
+    
+assert len(captured) == 3
+start, custom1, custom2 = captured
+assert isinstance(start, StartEvent)
+assert isinstance(custom1, MyCustomEvent1)
+assert isinstance(custom2, MyCustomEvent2)
+assert custom2.my_custom_event_attr.foo == 'bar'
+```
+
 # TODOS:
 - State-State consistency checks.
 - State-Metadata consistency checks.
