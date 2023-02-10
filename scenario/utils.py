@@ -11,11 +11,13 @@ def capture_events(*types: Type[EventBase], include_lifecycle_events=False):
     If no types are passed, will capture all types.
     """
     def _filter(evt):
-        if not include_lifecycle_events and isinstance(evt, (CommitEvent, PreCommitEvent)):
+        if isinstance(evt, (CommitEvent, PreCommitEvent)):
+            if include_lifecycle_events:
+                return True
             return False
         if types:
             return isinstance(evt, types)
-        return isinstance(evt, EventBase)
+        return True
 
     captured = []
     _real_emit = Framework._emit  # type: ignore # noqa # ugly

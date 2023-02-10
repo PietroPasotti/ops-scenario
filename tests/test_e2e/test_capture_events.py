@@ -1,6 +1,6 @@
 import pytest
 from ops.charm import CharmBase, CharmEvents, StartEvent
-from ops.framework import EventSource, EventBase
+from ops.framework import EventSource, EventBase, CommitEvent, PreCommitEvent
 
 from scenario import State
 from scenario.utils import capture_events
@@ -60,5 +60,8 @@ def test_capture_lifecycle(mycharm):
     with capture_events(FooEvent, include_lifecycle_events=True) as captured:
         State().trigger('start', mycharm, meta=mycharm.META)
 
-    assert len(captured) == 1
-    assert isinstance(captured[0], FooEvent)
+    assert len(captured) == 3
+    foo, precomm, comm = captured
+    assert isinstance(foo, FooEvent)
+    assert isinstance(comm, CommitEvent)
+    assert isinstance(precomm, PreCommitEvent)
